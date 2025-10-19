@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Реєстрація пацієнта</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f3f4f6;
+        }
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .auth-card {
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .auth-header {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .auth-switch a {
+            color: #2563eb;
+            transition: all 0.2s ease;
+        }
+        .auth-switch a:hover {
+            color: #1e40af;
+            text-decoration: underline;
+        }
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="bg-{% if category == 'error' %}red{% else %}green{% endif %}-500 text-white px-4 py-2 rounded-md mb-2 shadow-lg">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="auth-container">
+            <div class="auth-card bg-white overflow-hidden">
+                <div class="auth-header p-6 text-center text-white">
+                    <div class="flex justify-center mb-4">
+                        <i class="fas fa-heartbeat text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold">Реєстрація пацієнта</h2>
+                    <p class="mt-2 opacity-90">Створіть обліковий запис для доступу до медичних послуг</p>
+                </div>
+                <div class="p-6">
+                    <form class="space-y-6" method="POST" action="{{ url_for('register_patient') }}">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">Ім'я*</label>
+                                <input id="first-name" name="first-name" type="text" required
+                                       class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       value="{{ form_data.first_name if form_data else '' }}">
+                            </div>
+                            <div>
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">Прізвище*</label>
+                                <input id="last-name" name="last-name" type="text" required
+                                       class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       value="{{ form_data.last_name if form_data else '' }}">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="birthdate" class="block text-sm font-medium text-gray-700 mb-1">Дата народження*</label>
+                            <input id="birthdate" name="birthdate" type="date" required
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   value="{{ form_data.birthdate if form_data else '' }}">
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Електронна пошта*</label>
+                            <input id="email" name="email" type="email" required
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   value="{{ form_data.email if form_data else '' }}">
+                        </div>
+
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Номер телефону*</label>
+                            <input id="phone" name="phone" type="tel" required
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="+380991234567"
+                                   value="{{ form_data.phone if form_data else '' }}">
+                        </div>
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Адреса</label>
+                            <input id="address" name="address" type="text"
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   value="{{ form_data.address if form_data else '' }}">
+                        </div>
+
+                        <div>
+                            <label for="blood-type" class="block text-sm font-medium text-gray-700 mb-1">Група крові</label>
+                            <select id="blood-type" name="blood-type"
+                                    class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Оберіть групу крові</option>
+                                <option value="A+" {% if form_data and form_data.blood_type == 'A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if form_data and form_data.blood_type == 'A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if form_data and form_data.blood_type == 'B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if form_data and form_data.blood_type == 'B-' %}selected{% endif %}>B-</option>
+                                <option value="AB+" {% if form_data and form_data.blood_type == 'AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if form_data and form_data.blood_type == 'AB-' %}selected{% endif %}>AB-</option>
+                                <option value="O+" {% if form_data and form_data.blood_type == 'O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if form_data and form_data.blood_type == 'O-' %}selected{% endif %}>O-</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="allergies" class="block text-sm font-medium text-gray-700 mb-1">Алергії</label>
+                            <textarea id="allergies" name="allergies"
+                                      class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ form_data.allergies if form_data else '' }}</textarea>
+                        </div>
+
+                        <div>
+                            <label for="chronic-diseases" class="block text-sm font-medium text-gray-700 mb-1">Хронічні захворювання</label>
+                            <textarea id="chronic-diseases" name="chronic-diseases"
+                                      class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ form_data.chronic_diseases if form_data else '' }}</textarea>
+                        </div>
+
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Пароль*</label>
+                            <input id="password" name="password" type="password" required
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">Мінімум 8 символів, включаючи цифри та літери</p>
+                        </div>
+
+                        <div>
+                            <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Підтвердіть пароль*</label>
+                            <input id="confirm-password" name="confirm-password" type="password" required
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div class="flex items-center">
+                            <input id="terms" name="terms" type="checkbox" required
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="terms" class="ml-2 block text-sm text-gray-700">
+                                Я погоджуюсь з <a href="#" class="text-blue-600 hover:text-blue-800">умовами використання</a> та <a href="#" class="text-blue-600 hover:text-blue-800">політикою конфіденційності</a>
+                            </label>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                            <select name="gender" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
+                                Зареєструватись
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="auth-switch mt-6 text-center text-sm text-gray-600">
+                        Вже маєте акаунт? <a href="{{ url_for('login') }}" class="font-medium">Увійти</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center text-sm text-gray-500">
+                Ви лікар? <a href="{{ url_for('register_doctor') }}" class="font-medium text-blue-600 hover:text-blue-500">Реєстрація для лікарів</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const flashMessages = document.querySelector('.flash-messages');
+            if (flashMessages) {
+                flashMessages.style.transition = 'opacity 0.5s ease';
+                flashMessages.style.opacity = '0';
+                setTimeout(() => flashMessages.remove(), 500);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

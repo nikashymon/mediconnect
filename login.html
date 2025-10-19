@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Вхід</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f3f4f6;
+        }
+        .auth-container {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .auth-card {
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .auth-header {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        .auth-switch a {
+            color: #2563eb;
+            transition: all 0.2s ease;
+        }
+        .auth-switch a:hover {
+            color: #1e40af;
+            text-decoration: underline;
+        }
+        .user-type-btn {
+            transition: all 0.2s ease;
+        }
+        .user-type-btn.active {
+            background-color: #2563eb;
+            color: white;
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="auth-container">
+            <div class="auth-card bg-white overflow-hidden">
+                <div class="auth-header p-6 text-center text-white">
+                    <div class="flex justify-center mb-4">
+                        <i class="fas fa-heartbeat text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold">Вхід до MediConnect</h2>
+                    <p class="mt-2 opacity-90">Увійдіть у свій обліковий запис</p>
+                </div>
+                <div class="flex border-b border-gray-200">
+                    <button id="patient-btn" class="user-type-btn active flex-1 py-3 text-sm font-medium">
+                        <i class="fas fa-user mr-2"></i> Пацієнт
+                    </button>
+                    <button id="doctor-btn" class="user-type-btn flex-1 py-3 text-sm font-medium">
+                        <i class="fas fa-user-md mr-2"></i> Лікар
+                    </button>
+                </div>
+                <div class="p-6">
+                    <form class="space-y-6">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Електронна пошта*</label>
+                            <input id="email" name="email" type="email" required 
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Пароль*</label>
+                            <input id="password" name="password" type="password" required 
+                                   class="input-field w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div class="mt-1 flex justify-end">
+                                <a href="forgot-password.html" class="text-sm text-blue-600 hover:text-blue-500">Забули пароль?</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input id="remember-me" name="remember-me" type="checkbox" 
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="remember-me" class="ml-2 block text-sm text-gray-700">
+                                Запам'ятати мене
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
+                                Увійти
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-6">
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-2 bg-white text-gray-500">Або увійдіть через</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <i class="fab fa-google text-red-500 mr-2"></i> Google
+                            </a>
+                            <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <i class="fab fa-facebook-f text-blue-600 mr-2"></i> Facebook
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-switch mt-6 text-center text-sm text-gray-600">
+                        Немає акаунту? <a href="patient-signup.html" id="signup-link" class="font-medium">Зареєструватись як пацієнт</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const patientBtn = document.getElementById('patient-btn');
+        const doctorBtn = document.getElementById('doctor-btn');
+        const signupLink = document.getElementById('signup-link');
+        
+        patientBtn.addEventListener('click', function() {
+            patientBtn.classList.add('active');
+            patientBtn.classList.remove('bg-white', 'text-gray-700');
+            patientBtn.classList.add('text-white');
+            
+            doctorBtn.classList.remove('active');
+            doctorBtn.classList.add('bg-white', 'text-gray-700');
+            doctorBtn.classList.remove('text-white');
+            
+            signupLink.textContent = 'Зареєструватись як пацієнт';
+            signupLink.href = 'patient-signup.html';
+        });
+        
+        doctorBtn.addEventListener('click', function() {
+            doctorBtn.classList.add('active');
+            doctorBtn.classList.remove('bg-white', 'text-gray-700');
+            doctorBtn.classList.add('text-white');
+            
+            patientBtn.classList.remove('active');
+            patientBtn.classList.add('bg-white', 'text-gray-700');
+            patientBtn.classList.remove('text-white');
+            
+            signupLink.textContent = 'Зареєструватись як лікар';
+            signupLink.href = 'doctor-signup.html';
+        });
+    </script>
+</body>
+</html>

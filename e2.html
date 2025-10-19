@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Пацієнт</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease;
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 10px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            z-index: 50;
+        }
+        .profile-container:hover .profile-dropdown {
+            display: block;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .nav-item.active {
+            background-color: #1e40af;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .sidebar-overlay.active {
+            display: block;
+        }
+        .right-sidebar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .right-sidebar-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            min-height: 280px;
+        }
+
+        .right-sidebar-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .right-sidebar-card-header {
+            padding: 1.25rem 1.5rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .right-sidebar-card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .right-sidebar-card-content {
+            padding: 1.25rem 1.5rem;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .right-sidebar-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .right-sidebar-item:last-child {
+            border-bottom: none;
+        }
+        .right-sidebar-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .right-sidebar-card {
+            flex: 1;
+            min-height: 200px;
+        }
+
+        .right-sidebar-item-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .right-sidebar-item-desc {
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+
+        .right-sidebar-item-meta {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+        .prescription-icon {
+            color: #10b981;
+        }
+
+        .medical-icon {
+            color: #3b82f6;
+        }
+
+        .notification-icon {
+            color: #ef4444;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -250px;
+                width: 250px;
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                width: 100%;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .right-sidebar {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .right-sidebar-card-content {
+                max-height: 250px;
+            }
+
+            .right-sidebar-card {
+                min-height: 250px;
+            }
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+
+        .stat-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        .main-content-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .main-content-area > div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content-area > div:first-child {
+            gap: 1.5rem;
+        }
+        .main-content-area .bg-white {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        @media (max-width: 1024px) {
+            .main-content-area {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content-area {
+                gap: 1rem;
+            }
+        }
+        .bg-white.rounded-lg.shadow {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bg-white.rounded-lg.shadow .p-6 {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .dashboard-grid > div,
+        .main-content-area > div > .bg-white {
+            min-height: 150px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <div class="sidebar bg-blue-800 text-white flex flex-col">
+            <div class="p-4 flex items-center space-x-2 border-b border-blue-700">
+                <i class="fas fa-heartbeat text-2xl"></i>
+                <span class="logo-text text-xl font-bold">MediConnect</span>
+                <button class="ml-auto text-white hover:text-gray-200 sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <div class="space-y-2 px-4">
+                    <a href="#dashboard" class="nav-item flex items-center space-x-3 p-2 rounded-lg bg-blue-700 active">
+                        <i class="fas fa-home"></i>
+                        <span class="sidebar-text">Головна</span>
+                    </a>
+                    <a href="#appointments" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-calendar-check"></i>
+                        <span class="sidebar-text">Мої записи</span>
+                    </a>
+                    <a href="#doctors" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-user-md"></i>
+                        <span class="sidebar-text">Мої лікарі</span>
+                    </a>
+                    <a href="#prescriptions" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-prescription-bottle-alt"></i>
+                        <span class="sidebar-text">Мої рецепти</span>
+                    </a>
+                    <a href="#medical-records" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-file-medical"></i>
+                        <span class="sidebar-text">Медичні записи</span>
+                    </a>
+                    <a href="#notifications" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-bell"></i>
+                        <span class="sidebar-text">Сповіщення</span>
+                        <span class="notification-badge">0</span>
+                    </a>
+                    <a href="#settings" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-cog"></i>
+                        <span class="sidebar-text">Налаштування</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-blue-700">
+                <div class="flex items-center space-x-3 mb-3">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="w-10 h-10 rounded-full">
+                    <div>
+                        <div class="font-medium">{{ patient.first_name }} {{ patient.last_name }}</div>
+                        <div class="text-xs text-blue-200">Пацієнт</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700 text-white">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sidebar-text">Вийти</span>
+                </a>
+            </div>
+        </div>
+        <div class="main-content flex-1 overflow-auto">
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center space-x-4">
+                        <button class="mobile-menu-button md:hidden text-gray-600">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-xl font-semibold text-gray-800" id="page-title">Головна</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="profile-container relative">
+                            <button class="flex items-center space-x-2 focus:outline-none">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Patient" class="w-8 h-8 rounded-full">
+                                <span class="hidden md:inline">{{ patient.first_name }} {{ patient.last_name }}</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div class="profile-dropdown w-48 py-1 mt-2">
+                                <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Профіль</a>
+                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Вийти</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="p-6">
+                <div id="dashboard" class="tab-content active">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-md p-6 mb-6 text-white">
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-bold mb-2">Вітаємо, {{ patient.first_name }}!</h2>
+                                <p class="opacity-90">У вас заплановано {{ upcoming_appointments|length }} візити до лікарів на цьому тижні.</p>
+                            </div>
+                            <button class="mt-4 md:mt-0 bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition duration-200">
+                                Мої записи
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dashboard-grid mb-6">
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Найближчий візит</p>
+                                    {% if upcoming_appointments %}
+                                    <h3 class="text-2xl font-bold">
+                                        {% if upcoming_appointments[0].appointment_date == today %}
+                                        Сьогодні
+                                        {% else %}
+                                        {{ upcoming_appointments[0].appointment_date.strftime('%d.%m') }}
+                                        {% endif %}
+                                    </h3>
+                                    <p class="text-sm text-blue-500 mt-1">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        {{ upcoming_appointments[0].appointment_time.strftime('%H:%M') }} -
+                                        {% set doctor = upcoming_appointments[0].doctor if upcoming_appointments %}
+                                        Др. {{ doctor.first_name }} {{ doctor.last_name }}
+                                    </p>
+                                    {% else %}
+                                    <h3 class="text-2xl font-bold">Немає</h3>
+                                    <p class="text-sm text-blue-500 mt-1"><i class="fas fa-clock mr-1"></i> Запланованих візитів</p>
+                                    {% endif %}
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Активні рецепти</p>
+                                    <h3 class="text-2xl font-bold">{{ active_prescriptions_count }}</h3>
+                                    <p class="text-sm text-green-500 mt-1"><i class="fas fa-prescription-bottle-alt mr-1"></i> Діють</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <i class="fas fa-prescription-bottle-alt text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Мої лікарі</p>
+                                    <h3 class="text-2xl font-bold">{{ doctors|length }}</h3>
+                                    <p class="text-sm text-purple-500 mt-1"><i class="fas fa-user-md mr-1"></i>
+                                        {% if doctors|length > 0 %}
+                                        {{ doctors|length }} доступні
+                                        {% else %}
+                                        Немає лікарів
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full">
+                                    <i class="fas fa-user-md text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Непрочитані сповіщення</p>
+                                    <h3 class="text-2xl font-bold">{{ unread_notifications_count }}</h3>
+                                    <p class="text-sm text-red-500 mt-1"><i class="fas fa-exclamation-circle mr-1"></i>
+                                        {% if urgent_notifications_count > 0 %}
+                                        {{ urgent_notifications_count }} важливих
+                                        {% else %}
+                                        Немає сповіщень
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="bg-red-100 p-3 rounded-full">
+                                    <i class="fas fa-bell text-red-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="main-content-area">
+                        <div>
+                            <div class="bg-white rounded-lg shadow mb-6">
+                                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                                    <h2 class="text-lg font-semibold text-gray-800">Найближчі візити</h2>
+                                    <a href="#appointments" class="text-sm text-blue-600 hover:text-blue-800">Всі записи</a>
+                                </div>
+                                <div class="divide-y divide-gray-200" id="upcoming-appointments-list">
+                                    {% for appointment in upcoming_appointments %}
+                                    {{ appointment.doctor.first_name }}
+                                    <div class="p-4 hover:bg-gray-50 transition duration-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <img src="https://randomuser.me/api/portraits/men/{{ doctor.id % 100 }}.jpg" alt="" class="w-10 h-10 rounded-full">
+                                                <div>
+                                                    <h4 class="font-medium text-gray-900">Др. {{ doctor.first_name }} {{ doctor.last_name }}</h4>
+                                                    <p class="text-sm text-gray-500">{{ doctor.specialization }} | {{ appointment.reason or 'Консультація' }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-sm font-medium">
+                                                    {{ appointment.appointment_date.strftime('%d.%m.%Y') }}, {{ appointment.appointment_time.strftime('%H:%M') }}
+                                                </p>
+                                                <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">
+                                                    {{ 'Підтверджено' if appointment.status == 'scheduled' else appointment.status }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="p-4 text-center text-gray-500">
+                                        Немає запланованих візитів
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h2 class="text-lg font-semibold text-gray-800 mb-4">Медичний огляд</h2>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <h3 class="text-sm font-medium text-gray-500 mb-1">Останній візит</h3>
+                                        {% if medical_records %}
+                                        <p class="font-medium">{{ medical_records[0].record_date.strftime('%d %B %Y') }}</p>
+                                        <p class="text-sm text-gray-500">Др. {{ medical_records[0].doctor.first_name }} {{ medical_records[0].doctor.last_name }}</p>
+                                        {% else %}
+                                        <p class="font-medium">Немає даних</p>
+                                        <p class="text-sm text-gray-500">Ще не було візитів</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <h3 class="text-sm font-medium text-gray-500 mb-1">Група крові</h3>
+                                        <p class="font-medium">{{ patient.blood_type or 'Не вказано' }}</p>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <h3 class="text-sm font-medium text-gray-500 mb-1">Алергії</h3>
+                                        <p class="font-medium">{{ patient.allergies or 'Не вказано' }}</p>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <h3 class="text-sm font-medium text-gray-500 mb-1">Хронічні захворювання</h3>
+                                        <p class="font-medium">{{ patient.chronic_diseases or 'Не вказано' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="right-sidebar">
+                        <div class="right-sidebar-card">
+                            <div class="right-sidebar-card-header">
+                                <h3 class="right-sidebar-card-title">
+                                    <i class="fas fa-prescription-bottle-alt prescription-icon"></i>
+                                    Активні рецепти
+                                </h3>
+                                <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
+                                    {{ active_prescriptions_count }}
+                                </span>
+                            </div>
+                            <div class="right-sidebar-card-content">
+                                {% for prescription in active_prescriptions %}
+                                <div class="right-sidebar-item">
+                                    <div class="right-sidebar-item-title">
+                                        <i class="fas fa-pills text-blue-500"></i>
+                                        {{ prescription.medication }}
+                                    </div>
+                                    <div class="right-sidebar-item-desc">{{ prescription.dosage }}</div>
+                                    <div class="right-sidebar-item-meta">
+                                        <i class="fas fa-calendar-day text-gray-400"></i>
+                                        Дійсний до: {{ prescription.expiry_date.strftime('%d.%m.%Y') }}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-prescription-bottle-alt text-3xl mb-2 text-gray-300"></i>
+                                    <p>Немає активних рецептів</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="right-sidebar-card">
+                            <div class="right-sidebar-card-header">
+                                <h3 class="right-sidebar-card-title">
+                                    <i class="fas fa-file-medical medical-icon"></i>
+                                    Останні медичні записи
+                                </h3>
+                                <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                                    {{ recent_medical_records|length }}
+                                </span>
+                            </div>
+                            <div class="right-sidebar-card-content">
+                                {% for record in recent_medical_records %}
+                                <div class="right-sidebar-item">
+                                    <div class="right-sidebar-item-title">
+                                        <i class="fas fa-stethoscope text-green-500"></i>
+                                        {{ record.diagnosis or 'Медичний запис' }}
+                                    </div>
+                                    <div class="right-sidebar-item-desc">{{ record.notes or 'Без додаткових приміток' }}</div>
+                                    <div class="right-sidebar-item-meta">
+                                        <i class="fas fa-user-md text-gray-400"></i>
+                                        Др. {{ record.doctor.first_name }} {{ record.doctor.last_name }}
+                                        <i class="fas fa-calendar-alt text-gray-400 ml-2"></i>
+                                        {{ record.record_date.strftime('%d.%m.%Y') }}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-file-medical text-3xl mb-2 text-gray-300"></i>
+                                    <p>Немає медичних записів</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="right-sidebar-card">
+                            <div class="right-sidebar-card-header">
+                                <h3 class="right-sidebar-card-title">
+                                    <i class="fas fa-bell notification-icon"></i>
+                                    Останні сповіщення
+                                </h3>
+                                {% if unread_notifications_count > 0 %}
+                                <span class="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
+                                    {{ unread_notifications_count }} нових
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="right-sidebar-card-content">
+                                {% for notification in recent_notifications %}
+                                <div class="right-sidebar-item {% if not notification.is_read %}bg-blue-50 -mx-3 px-3 py-3 border-l-4 border-blue-500 rounded-r-lg{% endif %}">
+                                    <div class="right-sidebar-item-title">
+                                        <i class="fas fa-{% if not notification.is_read %}exclamation-circle text-red-500{% else %}info-circle text-blue-500{% endif %}"></i>
+                                        {{ notification.title }}
+                                    </div>
+                                    <div class="right-sidebar-item-desc">{{ notification.message }}</div>
+                                    <div class="right-sidebar-item-meta">
+                                        <i class="fas fa-clock text-gray-400"></i>
+                                        {{ notification.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-bell text-3xl mb-2 text-gray-300"></i>
+                                    <p>Немає сповіщень</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="appointments" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Мої записи</h2>
+                        <div id="appointments-container">
+
+                        </div>
+                    </div>
+                </div>
+                <div id="doctors" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Мої лікарі</h2>
+                        <div id="doctors-container">
+                        </div>
+                    </div>
+                </div>
+                <div id="prescriptions" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Мої рецепти</h2>
+                        <div id="prescriptions-container">
+
+                        </div>
+                    </div>
+                </div>
+                <div id="medical-records" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Медичні записи</h2>
+                        <div id="medical-records-container">
+
+                        </div>
+                    </div>
+                </div>
+                <div id="notifications" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">Сповіщення</h2>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm" onclick="markAllNotificationsAsRead()">
+                                <i class="fas fa-check mr-1"></i> Позначити всі як прочитані
+                            </button>
+                        </div>
+                        <div id="notifications-container">
+
+                        </div>
+                    </div>
+                </div>
+                <div id="settings" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Налаштування профілю</h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2">
+                                <div class="bg-white rounded-lg shadow p-6">
+                                    <h3 class="text-lg font-semibold mb-4">Особиста інформація</h3>
+                                    <form id="personal-info-form">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Ім'я</label>
+                                                <input type="text" name="first_name" value="{{ patient.first_name }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Прізвище</label>
+                                                <input type="text" name="last_name" value="{{ patient.last_name }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                            </div>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Номер телефону</label>
+                                            <input type="tel" name="phone" value="{{ patient.phone }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                        </div>
+                                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                            Зберегти зміни
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                                    <h3 class="text-lg font-semibold mb-4">Медична інформація</h3>
+                                    <form id="medical-info-form">
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Група крові</label>
+                                            <select name="blood_type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <option value="">Не вказано</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Алергії</label>
+                                            <textarea name="allergies" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.allergies or '' }}</textarea>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Хронічні захворювання</label>
+                                            <textarea name="chronic_diseases" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ patient.chronic_diseases or '' }}</textarea>
+                                        </div>
+                                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                            Оновити медичні дані
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div class="sidebar-overlay"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+        const mobileMenuButton = document.querySelector('.mobile-menu-button');
+        const mainContent = document.querySelector('.main-content');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        function toggleDesktopSidebar() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+        function toggleMobileSidebar() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            }
+        }
+        overlay.addEventListener('click', function() {
+            if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+        });
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', toggleDesktopSidebar);
+        }
+
+        if (mobileMenuButton) {
+            mobileMenuButton.addEventListener('click', toggleMobileSidebar);
+        }
+        const navItems = document.querySelectorAll('.nav-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const pageTitle = document.getElementById('page-title');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                navItems.forEach(i => i.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                this.classList.add('active');
+                const targetId = this.getAttribute('href').substring(1);
+                const targetTab = document.getElementById(targetId);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+                const tabTitles = {
+                    'dashboard': 'Головна',
+                    'appointments': 'Мої записи',
+                    'doctors': 'Мої лікарі',
+                    'prescriptions': 'Мої рецепти',
+                    'medical-records': 'Медичні записи',
+                    'notifications': 'Сповіщення',
+                    'settings': 'Налаштування'
+                };
+
+                if (pageTitle && tabTitles[targetId]) {
+                    pageTitle.textContent = tabTitles[targetId];
+                }
+                loadTabData(targetId);
+            });
+        });
+        function loadTabData(tabId) {
+            switch(tabId) {
+                case 'appointments':
+                    loadAppointments();
+                    break;
+                case 'prescriptions':
+                    loadPrescriptions();
+                    break;
+                case 'medical-records':
+                    loadMedicalRecords();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+                case 'doctors':
+                    loadDoctors();
+                    break;
+                case 'dashboard':
+                    updateNotificationBadge();
+                    break;
+            }
+        }
+
+        function updateNotificationBadge() {
+            fetch('/api/patient/notifications')
+                .then(response => response.json())
+                .then(notifications => {
+                    const unreadCount = notifications.filter(n => !n.is_read).length;
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        badge.textContent = unreadCount;
+                    }
+                });
+        }
+        function loadAppointments() {
+            fetch('/api/patient/appointments')
+                .then(response => response.json())
+                .then(appointments => {
+                    const container = document.getElementById('appointments-container');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    if (appointments.length === 0) {
+                        container.innerHTML = '<p class="text-center p-4">Немає записів</p>';
+                        return;
+                    }
+
+                    appointments.forEach(appointment => {
+                        const appointmentElement = document.createElement('div');
+                        appointmentElement.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200 mb-4';
+
+                        let statusClass = 'bg-green-100 text-green-800';
+                        let statusText = 'Підтверджено';
+                        if (appointment.status === 'completed') {
+                            statusClass = 'bg-blue-100 text-blue-800';
+                            statusText = 'Завершено';
+                        } else if (appointment.status === 'cancelled') {
+                            statusClass = 'bg-red-100 text-red-800';
+                            statusText = 'Скасовано';
+                        }
+
+                        appointmentElement.innerHTML = `
+                            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">${appointment.reason || 'Консультація'}</h3>
+                                    <p class="text-sm text-gray-500">${appointment.date} | ${appointment.time} | ${appointment.doctor_name}</p>
+                                </div>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-sm"><span class="font-medium">Лікар:</span> ${appointment.doctor_name} (${appointment.specialization})</p>
+                                        <p class="text-sm mt-1"><span class="font-medium">Причина візиту:</span> ${appointment.reason || 'Не вказано'}</p>
+                                        <p class="text-sm mt-1"><span class="font-medium">Статус:</span> ${statusText}</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 border border-blue-600 rounded-md view-appointment" data-id="${appointment.id}">Деталі</button>
+                                        ${appointment.status === 'scheduled' ?
+                                            `<button class="text-red-600 hover:text-red-800 text-sm px-3 py-1 border border-red-600 rounded-md cancel-appointment" data-id="${appointment.id}">Скасувати</button>` :
+                                            ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        container.appendChild(appointmentElement);
+                    });
+                    document.querySelectorAll('.view-appointment').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const appointmentId = this.getAttribute('data-id');
+                            viewAppointmentDetails(appointmentId);
+                        });
+                    });
+
+                    document.querySelectorAll('.cancel-appointment').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const appointmentId = this.getAttribute('data-id');
+                            cancelAppointment(appointmentId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Помилка завантаження записів:', error);
+                });
+        }
+        function viewAppointmentDetails(appointmentId) {
+            fetch(`/api/patient/appointments/${appointmentId}`)
+                .then(response => response.json())
+                .then(appointment => {
+                    const modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                    modal.innerHTML = `
+                        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                            <div class="p-6">
+                                <h3 class="text-xl font-bold mb-4">Деталі запису</h3>
+                                <div class="space-y-3">
+                                    <p><strong>Лікар:</strong> ${appointment.doctor_name}</p>
+                                    <p><strong>Спеціалізація:</strong> ${appointment.specialization}</p>
+                                    <p><strong>Дата:</strong> ${appointment.date}</p>
+                                    <p><strong>Час:</strong> ${appointment.time}</p>
+                                    <p><strong>Тривалість:</strong> ${appointment.duration} хв</p>
+                                    <p><strong>Статус:</strong> ${appointment.status}</p>
+                                    <p><strong>Причина:</strong> ${appointment.reason}</p>
+                                    <p><strong>Примітки:</strong> ${appointment.notes}</p>
+                                    <p><strong>Створено:</strong> ${appointment.created_at}</p>
+                                </div>
+                                <div class="mt-6 flex justify-end">
+                                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 close-modal">Закрити</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    document.body.appendChild(modal);
+
+                    modal.querySelector('.close-modal').addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                    });
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            document.body.removeChild(modal);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Помилка завантаження деталей запису:', error);
+                    alert('Помилка завантаження деталей запису');
+                });
+        }
+        function cancelAppointment(appointmentId) {
+            if (confirm('Ви впевнені, що хочете скасувати цей запис?')) {
+                fetch(`/api/patient/appointments/${appointmentId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Запис успішно скасовано!');
+                        loadAppointments();
+                        updateNotificationBadge();
+                    } else {
+                        alert('Помилка: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Помилка скасування запису:', error);
+                    alert('Помилка скасування запису');
+                });
+            }
+        }
+        function loadPrescriptions() {
+            fetch('/api/patient/prescriptions')
+                .then(response => response.json())
+                .then(prescriptions => {
+                    const container = document.getElementById('prescriptions-container');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    if (prescriptions.length === 0) {
+                        container.innerHTML = '<p class="text-center p-4">Немає рецептів</p>';
+                        return;
+                    }
+
+                    prescriptions.forEach(prescription => {
+                        const prescriptionElement = document.createElement('div');
+                        prescriptionElement.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200 mb-4';
+
+                        prescriptionElement.innerHTML = `
+                            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">${prescription.prescriptions || 'Рецепт'}</h3>
+                                    <p class="text-sm text-gray-500">Виписано: ${prescription.date} | ${prescription.doctor_name}</p>
+                                </div>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Активний</span>
+                            </div>
+                            <div class="p-4">
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 mb-1">Діагноз</h4>
+                                    <p class="text-sm">${prescription.diagnosis || 'Не вказано'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 mb-1">Призначення</h4>
+                                    <p class="text-sm">${prescription.prescriptions || 'Не вказано'}</p>
+                                </div>
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 border border-blue-600 rounded-md download-prescription" data-id="${prescription.id}">Завантажити PDF</button>
+                                </div>
+                            </div>
+                        `;
+
+                        container.appendChild(prescriptionElement);
+                    });
+                    document.querySelectorAll('.download-prescription').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const recordId = this.getAttribute('data-id');
+                            downloadPrescriptionPDF(recordId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Помилка завантаження рецептів:', error);
+                });
+        }
+        function downloadPrescriptionPDF(recordId) {
+            window.open(`/api/patient/prescription/${recordId}/pdf`, '_blank');
+        }
+        function loadMedicalRecords() {
+            fetch('/api/patient/medical-records')
+                .then(response => response.json())
+                .then(records => {
+                    const container = document.getElementById('medical-records-container');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    if (records.length === 0) {
+                        container.innerHTML = '<p class="text-center p-4">Немає медичних записів</p>';
+                        return;
+                    }
+
+                    records.forEach(record => {
+                        const recordElement = document.createElement('div');
+                        recordElement.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200 mb-4';
+
+                        recordElement.innerHTML = `
+                            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">${record.diagnosis || 'Медичний запис'}</h3>
+                                    <p class="text-sm text-gray-500">${record.date} | ${record.doctor_name}</p>
+                                </div>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Запис</span>
+                            </div>
+                            <div class="p-4">
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 mb-1">Діагноз</h4>
+                                    <p class="text-sm">${record.diagnosis || 'Не вказано'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 mb-1">Лікування</h4>
+                                    <p class="text-sm">${record.treatment || 'Не вказано'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 mb-1">Призначення</h4>
+                                    <p class="text-sm">${record.prescriptions || 'Не вказано'}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-gray-500 mb-1">Примітки</h4>
+                                    <p class="text-sm">${record.notes || 'Немає приміток'}</p>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 border border-blue-600 rounded-md download-medical-record" data-id="${record.id}">Завантажити PDF</button>
+                                </div>
+                            </div>
+                        `;
+
+                        container.appendChild(recordElement);
+                    });
+                    document.querySelectorAll('.download-medical-record').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const recordId = this.getAttribute('data-id');
+                            downloadMedicalRecordPDF(recordId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Помилка завантаження медичних записів:', error);
+                });
+        }
+        function downloadMedicalRecordPDF(recordId) {
+            window.open(`/api/patient/medical-record/${recordId}/pdf`, '_blank');
+        }
+        function loadNotifications() {
+            fetch('/api/patient/notifications')
+                .then(response => response.json())
+                .then(notifications => {
+                    const container = document.getElementById('notifications-container');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    if (notifications.length === 0) {
+                        container.innerHTML = '<p class="text-center p-4">Немає сповіщень</p>';
+                        return;
+                    }
+
+                    notifications.forEach(notification => {
+                        const notificationElement = document.createElement('div');
+                        notificationElement.className = `border-l-4 ${notification.is_read ? 'border-gray-300 bg-gray-50' : 'border-blue-500 bg-blue-50'} p-4 mb-4 rounded notification-item`;
+                        notificationElement.setAttribute('data-id', notification.id);
+
+                        notificationElement.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-gray-900">${notification.title}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                                    <p class="text-xs text-gray-500 mt-2">${notification.created_at}</p>
+                                </div>
+                                <div>
+                                    ${!notification.is_read ?
+                                        '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Нове</span>' :
+                                        ''}
+                                </div>
+                            </div>
+                            ${!notification.is_read ? `
+                            <div class="mt-3 flex justify-end">
+                                <button class="text-blue-600 hover:text-blue-800 text-sm mark-as-read" data-id="${notification.id}">
+                                    Позначити як прочитане
+                                </button>
+                            </div>
+                            ` : ''}
+                        `;
+
+                        container.appendChild(notificationElement);
+                    });
+                    document.querySelectorAll('.mark-as-read').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const notificationId = this.getAttribute('data-id');
+                            markNotificationAsRead(notificationId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Помилка завантаження сповіщень:', error);
+                });
+        }
+        function markNotificationAsRead(notificationId) {
+            fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const notificationElement = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+                    if (notificationElement) {
+                        notificationElement.remove();
+                    }
+                    updateNotificationBadge();
+                    const container = document.getElementById('notifications-container');
+                    if (container.children.length === 0) {
+                        container.innerHTML = '<p class="text-center p-4">Немає сповіщень</p>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Помилка позначення сповіщення як прочитаного:', error);
+            });
+        }
+        function markAllNotificationsAsRead() {
+            if (confirm('Позначити всі сповіщення як прочитані?')) {
+                fetch('/api/patient/notifications/mark-all-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Всі сповіщення позначено як прочитані!');
+                        loadNotifications();
+                        updateNotificationBadge();
+                    } else {
+                        alert('Помилка: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Помилка позначення всіх сповіщень як прочитаних:', error);
+                });
+            }
+        }
+        function loadDoctors() {
+            fetch('/api/patient/doctors')
+                .then(response => response.json())
+                .then(doctors => {
+                    const container = document.getElementById('doctors-container');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    if (doctors.length === 0) {
+                        container.innerHTML = '<p class="text-center p-4">Немає лікарів</p>';
+                        return;
+                    }
+
+                    doctors.forEach(doctor => {
+                        const doctorElement = document.createElement('div');
+                        doctorElement.className = 'bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200 mb-4';
+
+                        doctorElement.innerHTML = `
+                            <div class="p-4 flex items-center space-x-4">
+                                <img src="https://randomuser.me/api/portraits/men/${doctor.id % 100}.jpg" alt="${doctor.name}" class="w-16 h-16 rounded-full">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-gray-900">${doctor.name}</h3>
+                                    <p class="text-sm text-gray-500">${doctor.specialization}</p>
+                                    <p class="text-sm text-gray-500 mt-1">${doctor.bio}</p>
+                                    <div class="flex items-center mt-2">
+                                        <span class="text-yellow-400">
+                                            ${'★'.repeat(Math.floor(doctor.rating || 4))}${'☆'.repeat(5 - Math.floor(doctor.rating || 4))}
+                                        </span>
+                                        <span class="text-sm text-gray-500 ml-1">(${doctor.reviews || 0} відгуків)</span>
+                                    </div>
+                                    <div class="mt-2 text-sm text-gray-600">
+                                        <p><strong>Останній візит:</strong> ${doctor.last_visit}</p>
+                                        <p><strong>Всього візитів:</strong> ${doctor.total_visits}</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col space-y-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 border border-blue-600 rounded-md">Записатися</button>
+                                    <button class="text-gray-600 hover:text-gray-800 text-sm px-3 py-1 border border-gray-600 rounded-md">Написати</button>
+                                </div>
+                            </div>
+                        `;
+
+                        container.appendChild(doctorElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Помилка завантаження лікарів:', error);
+                });
+        }
+        function setupAvatarUpload() {
+            const avatarInput = document.createElement('input');
+            avatarInput.type = 'file';
+            avatarInput.accept = 'image/*';
+            avatarInput.style.display = 'none';
+
+            document.body.appendChild(avatarInput);
+            document.querySelectorAll('img[alt="User"], img[alt="Patient"]').forEach(img => {
+                img.style.cursor = 'pointer';
+                img.addEventListener('click', () => {
+                    avatarInput.click();
+                });
+            });
+
+            avatarInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    if (!file.type.match('image.*')) {
+                        alert('Будь ласка, виберіть зображення');
+                        return;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                        alert('Розмір файлу не повинен перевищувати 5MB');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.querySelectorAll('img[alt="User"], img[alt="Patient"]').forEach(img => {
+                            img.src = e.target.result;
+                        });
+                        fetch('/api/patient/avatar', {
+                            method: 'POST',
+                            body: new FormData()
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Аватар успішно оновлено!');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Помилка оновлення аватара:', error);
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        document.getElementById('personal-info-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('/api/patient/update-profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Особиста інформація оновлена!');
+                } else {
+                    alert('Помилка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Помилка оновлення профілю:', error);
+                alert('Помилка оновлення профілю');
+            });
+        });
+
+        document.getElementById('medical-info-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('/api/patient/update-medical-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Медична інформація оновлена!');
+                } else {
+                    alert('Помилка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Помилка оновлення медичної інформації:', error);
+                alert('Помилка оновлення медичної інформації');
+            });
+        });
+        setupAvatarUpload();
+        updateNotificationBadge();
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+            }
+            .stat-card {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            .main-content-area {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 1.5rem;
+            }
+            @media (max-width: 1024px) {
+                .main-content-area {
+                    grid-template-columns: 1fr;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        const overviewGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4.gap-6.mb-6');
+        if (overviewGrid) {
+            overviewGrid.className = 'dashboard-grid mb-6';
+            overviewGrid.querySelectorAll('> div').forEach(card => {
+                card.className = 'stat-card bg-white rounded-lg shadow p-6 hover:shadow-md transition duration-200';
+            });
+        }
+
+        const mainContentArea = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-3.gap-6');
+        if (mainContentArea) {
+            mainContentArea.className = 'main-content-area';
+        }
+    });
+</script>
+</body>
+</html>

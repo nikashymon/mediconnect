@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Doctor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .select-loading {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease;
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 10px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            z-index: 50;
+        }
+        .profile-container:hover .profile-dropdown {
+            display: block;
+        }
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover {
+            background-color: #e5e7eb;
+        }
+        .calendar-day.selected {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .time-slot {
+            transition: all 0.2s ease;
+        }
+        .time-slot:hover {
+            background-color: #e5e7eb;
+        }
+        .time-slot.selected {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .time-slot.booked {
+            background-color: #ef4444;
+            color: white;
+            cursor: not-allowed;
+        }
+        .time-slot.available {
+            background-color: #10b981;
+            color: white;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .nav-item.active {
+            background-color: #1e40af;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            left: -250px;
+            width: 250px;
+            position: fixed;
+            z-index: 1000;
+            height: 100vh;
+            transition: left 0.3s ease;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+            width: 100%;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+    }
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -250px;
+                width: 250px;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                width: 100%;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
+            .sidebar-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <div class="sidebar bg-blue-800 text-white flex flex-col">
+            <div class="p-4 flex items-center space-x-2 border-b border-blue-700">
+                <i class="fas fa-heartbeat text-2xl"></i>
+                <span class="logo-text text-xl font-bold">MediConnect</span>
+                <button class="ml-auto text-white hover:text-gray-200 sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <div class="space-y-2 px-4">
+                    <a href="#dashboard" class="nav-item flex items-center space-x-3 p-2 rounded-lg bg-blue-700 active">
+                        <i class="fas fa-home"></i>
+                        <span class="sidebar-text">Dashboard</span>
+                    </a>
+                    <a href="#appointments" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-calendar-check"></i>
+                        <span class="sidebar-text">Appointments</span>
+                    </a>
+                    <a href="#patients" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-procedures"></i>
+                        <span class="sidebar-text">Patients</span>
+                    </a>
+                    <a href="#medical-records" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-file-medical"></i>
+                        <span class="sidebar-text">Medical Records</span>
+                    </a>
+                    <a href="#prescriptions" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-prescription-bottle-alt"></i>
+                        <span class="sidebar-text">Prescriptions</span>
+                    </a>
+                    <a href="#notifications" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-bell"></i>
+                        <span class="sidebar-text">Notifications</span>
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                    </a>
+                    <a href="#settings" class="nav-item flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-cog"></i>
+                        <span class="sidebar-text">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-blue-700">
+                <div class="flex items-center space-x-3 mb-4">
+                    <img src="{{ url_for('uploaded_file', filename=doctor.avatar) if doctor.avatar else 'https://randomuser.me/api/portraits/men/' + (doctor.id|string) + '.jpg' }}" alt="Doctor" class="w-10 h-10 rounded-full">
+                    <div>
+                        <div class="font-medium">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</div>
+                        <div class="text-xs text-blue-200">{{ doctor.specialization }}</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700 text-white">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sidebar-text">Logout</span>
+                </a>
+            </div>
+        </div>
+        <div class="main-content flex-1 overflow-auto">
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center space-x-4">
+                        <button class="mobile-menu-button md:hidden text-gray-600">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-xl font-semibold text-gray-800" id="page-title">Dashboard</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="profile-container relative">
+                            <button class="flex items-center space-x-2 focus:outline-none">
+                                <img src="{{ url_for('uploaded_file', filename=doctor.avatar) if doctor.avatar else 'https://randomuser.me/api/portraits/men/' + (doctor.id|string) + '.jpg' }}" alt="Doctor" class="w-8 h-8 rounded-full">
+                                <span class="hidden md:inline">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div class="profile-dropdown w-48 py-1 mt-2">
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="p-6">
+                <div id="dashboard" class="tab-content active">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-md p-6 mb-6 text-white">
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="relative">
+                                    <img id="doctor-avatar"
+     src="{{ url_for('uploaded_file', filename=doctor.avatar) if doctor.avatar else 'https://randomuser.me/api/portraits/men/' + (doctor.id|string) + '.jpg' }}"
+     alt="Doctor" class="w-20 h-20 rounded-full border-4 border-white">
+                                    <label for="avatar-upload" class="absolute bottom-0 right-0 bg-blue-500 text-white p-1 rounded-full cursor-pointer hover:bg-blue-600">
+                                        <i class="fas fa-camera text-xs"></i>
+                                        <input id="avatar-upload" type="file" accept="image/*" class="hidden">
+                                    </label>
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-bold mb-2">Welcome back, Dr. {{ doctor.last_name }}!</h2>
+                                    <p class="opacity-90">You have {{ appointments_today_count }} appointments scheduled for today. Let's make a difference!</p>
+                                </div>
+                            </div>
+                            <button onclick="loadAppointments()" class="mt-4 md:mt-0 bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition duration-200">
+                                View Today's Schedule
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition duration-200 cursor-pointer" onclick="showTab('appointments')">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Today's Appointments</p>
+                                    <h3 class="text-2xl font-bold">{{ appointments_today_count }}</h3>
+                                    {% if appointments_today_count > yesterday_appointments_count %}
+                                    <p class="text-sm text-green-500 mt-1"><i class="fas fa-arrow-up mr-1"></i> {{ appointments_today_count - yesterday_appointments_count }} more than yesterday</p>
+                                    {% else %}
+                                    <p class="text-sm text-red-500 mt-1"><i class="fas fa-arrow-down mr-1"></i> {{ yesterday_appointments_count - appointments_today_count }} less than yesterday</p>
+                                    {% endif %}
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition duration-200 cursor-pointer" onclick="showTab('patients')">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Total Patients</p>
+                                    <h3 class="text-2xl font-bold">{{ total_patients }}</h3>
+                                    <p class="text-sm text-green-500 mt-1"><i class="fas fa-user-plus mr-1"></i> {{ new_patients_this_week }} new this week</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <i class="fas fa-procedures text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition duration-200 cursor-pointer" onclick="showTab('prescriptions')">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Pending Prescriptions</p>
+                                    <h3 class="text-2xl font-bold">{{ pending_prescriptions_count }}</h3>
+                                    <p class="text-sm text-yellow-500 mt-1"><i class="fas fa-clock mr-1"></i> Needs approval</p>
+                                </div>
+                                <div class="bg-yellow-100 p-3 rounded-full">
+                                    <i class="fas fa-prescription-bottle-alt text-yellow-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition duration-200 cursor-pointer" onclick="showTab('notifications')">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Unread Notifications</p>
+                                    <h3 class="text-2xl font-bold">{{ unread_notifications_count }}</h3>
+                                    <p class="text-sm text-blue-500 mt-1"><i class="fas fa-bell mr-1"></i> Click to view</p>
+                                </div>
+                                <div class="bg-red-100 p-3 rounded-full">
+                                    <i class="fas fa-bell text-red-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-semibold text-gray-800">Weekly Appointments</h2>
+                                <select id="chart-period" class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                </select>
+                            </div>
+                            <div class="chart-container">
+                                <div class="flex items-end h-64 mt-4 space-x-2">
+                                    {% for day in weekly_appointments_data %}
+                                    <div class="flex-1 flex flex-col items-center">
+                                        <div class="bg-blue-100 rounded-t flex items-end w-full" style="height: 200px;">
+                                            <div class="bg-blue-500 w-full rounded-t transition-all duration-300"
+                                                 style="height: {{ day.percentage }}%;"
+                                                 title="{{ day.count }} appointments on {{ day.day }}"></div>
+                                        </div>
+                                        <span class="text-xs mt-2 font-medium">{{ day.day }}</span>
+                                        <span class="text-xs text-gray-500">{{ day.count }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h2 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                            <div class="space-y-3">
+                                <button class="w-full flex items-center space-x-3 bg-blue-50 hover:bg-blue-100 text-blue-600 p-3 rounded-md transition duration-200 quick-action-btn"
+                                        data-action="add-appointment" onclick="openAppointmentModal()">
+                                    <i class="fas fa-plus-circle text-lg"></i>
+                                    <span>New Appointment</span>
+                                </button>
+                                <button class="w-full flex items-center space-x-3 bg-green-50 hover:bg-green-100 text-green-600 p-3 rounded-md transition duration-200 quick-action-btn"
+                                        data-action="add-record" onclick="openPrescriptionModal()">
+                                    <i class="fas fa-file-medical text-lg"></i>
+                                    <span>Create Medical Record</span>
+                                </button>
+                                <button class="w-full flex items-center space-x-3 bg-purple-50 hover:bg-purple-100 text-purple-600 p-3 rounded-md transition duration-200 quick-action-btn"
+                                        data-action="add-prescription" onclick="openPrescriptionModal()">
+                                    <i class="fas fa-prescription-bottle-alt text-lg"></i>
+                                    <span>Write Prescription</span>
+                                </button>
+                                <button class="w-full flex items-center space-x-3 bg-yellow-50 hover:bg-yellow-100 text-yellow-600 p-3 rounded-md transition duration-200 quick-action-btn"
+                                        data-action="add-patient" onclick="openAddPatientModal()">
+                                    <i class="fas fa-user-plus text-lg"></i>
+                                    <span>Add New Patient</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow">
+                            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                                <h2 class="text-lg font-semibold text-gray-800">Upcoming Appointments</h2>
+                                <button onclick="showTab('appointments')" class="text-sm text-blue-600 hover:text-blue-800">View All</button>
+                            </div>
+                            <div class="divide-y divide-gray-200" id="upcoming-appointments-list">
+                                {% for appointment in upcoming_appointments %}
+                                <div class="p-4 hover:bg-gray-50 transition duration-200 cursor-pointer" onclick="viewAppointment({{ appointment.id }})">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="{{ appointment.patient.avatar and url_for('uploaded_file', filename=appointment.patient.avatar) or 'https://randomuser.me/api/portraits/' + ('women' if appointment.patient.gender == 'female' else 'men') + '/' + (appointment.patient.id % 100)|string + '.jpg' }}"
+                                                 alt="Patient" class="w-10 h-10 rounded-full">
+                                            <div>
+                                                <h4 class="font-medium text-gray-900">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</h4>
+                                                <p class="text-sm text-gray-500">{{ appointment.reason or 'Consultation' }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-medium">
+                                                {% if appointment.appointment_date == today %}
+                                                Today, {{ appointment.appointment_time.strftime('%I:%M %p') }}
+                                                {% else %}
+                                                {{ appointment.appointment_date.strftime('%b %d') }}, {{ appointment.appointment_time.strftime('%I:%M %p') }}
+                                                {% endif %}
+                                            </p>
+                                            <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">{{ appointment.status|capitalize }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="p-4 text-gray-500 text-center">No upcoming appointments</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow">
+                            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                                <h2 class="text-lg font-semibold text-gray-800">Recent Patients</h2>
+                                <button onclick="showTab('patients')" class="text-sm text-blue-600 hover:text-blue-800">View All</button>
+                            </div>
+                            <div class="divide-y divide-gray-200">
+                                {% for patient in recent_patients %}
+                                <div class="p-4 hover:bg-gray-50 transition duration-200 cursor-pointer" onclick="viewPatient({{ patient.id }})">
+                                    <div class="flex items-center space-x-3">
+                                        <img src="{{ patient.avatar and url_for('uploaded_file', filename=patient.avatar) or 'https://randomuser.me/api/portraits/' + ('women' if patient.gender == 'female' else 'men') + '/' + (patient.id % 100)|string + '.jpg' }}"
+                                             alt="Patient" class="w-10 h-10 rounded-full">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900">{{ patient.first_name }} {{ patient.last_name }}</h4>
+                                            <p class="text-sm text-gray-500">ID: #PAT-{{ "%04d"|format(patient.id) }} | Last visit: {{ patient.last_visit or 'New patient' }}</p>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-800" onclick="event.stopPropagation(); openPrescriptionModal({{ patient.id }})">
+                                                <i class="fas fa-prescription"></i>
+                                            </button>
+                                            <button class="text-green-600 hover:text-green-800" onclick="event.stopPropagation(); openMedicalRecordModal({{ patient.id }})">
+                                                <i class="fas fa-file-medical"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="p-4 text-gray-500 text-center">No recent patients</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="appointments" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Appointments Management</h2>
+                        <div class="flex flex-col md:flex-row gap-6 mb-6">
+                            <div class="bg-white rounded-lg shadow p-4 flex-1">
+                                <h3 class="text-lg font-semibold mb-4">Schedule New Appointment</h3>
+                                <form id="appointment-form">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Patient *</label>
+                                            <select id="patient-select" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 select-loading">
+                                                <option value="">Loading patients...</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Type</label>
+                                            <select id="appointment-type" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                <option value="">Select Type</option>
+                                                <option value="Consultation">Consultation</option>
+                                                <option value="Follow-up">Follow-up</option>
+                                                <option value="Check-up">Check-up</option>
+                                                <option value="Emergency">Emergency</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                        <input type="date" id="appointment-date" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" min="{{ today.strftime('%Y-%m-%d') }}">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                        <input type="time" id="appointment-time" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" min="09:00" max="17:00">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                                        <input type="text" id="appointment-reason" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Reason for appointment">
+                                    </div>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                        Schedule Appointment
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="bg-white rounded-lg shadow p-4 flex-1">
+                                <h3 class="text-lg font-semibold mb-4">Calendar View</h3>
+                                <div class="mb-4 flex justify-between items-center">
+                                    <button class="text-blue-600 hover:text-blue-800 prev-month"><i class="fas fa-chevron-left"></i></button>
+                                    <h4 class="font-medium" id="calendar-month"></h4>
+                                    <button class="text-blue-600 hover:text-blue-800 next-month"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 mb-2">
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Sun</div>
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Mon</div>
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Tue</div>
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Wed</div>
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Thu</div>
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Fri</div>
+                                    <div class="text-center text-sm font-medium text-gray-500 py-1">Sat</div>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1" id="calendar-days"></div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="text-lg font-semibold">Upcoming Appointments</h3>
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm filter-btn" data-filter="today">Today</button>
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm filter-btn" data-filter="week">This Week</button>
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm filter-btn" data-filter="month">This Month</button>
+                                </div>
+                            </div>
+                            <div class="divide-y divide-gray-200" id="appointments-list">
+                                {% for appointment in appointments_today %}
+                                <div class="p-4 hover:bg-gray-50 transition duration-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://randomuser.me/api/portraits/{{ 'women' if patient.gender == 'female' else 'men' }}/{{ patient.id % 100 }}.jpg">
+                                            <div>
+                                                <h4 class="font-medium text-gray-900">{{ appointment.patient.first_name }} {{ appointment.patient.last_name }}</h4>
+                                                <p class="text-sm text-gray-500">{{ appointment.reason or 'Consultation' }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-medium">{{ appointment.appointment_date.strftime('%Y-%m-%d') }}, {{ appointment.appointment_time.strftime('%I:%M %p') }}</p>
+                                            <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">{{ appointment.status|capitalize }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="p-4 text-gray-500">No upcoming appointments</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="patients" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">Patients Management</h2>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 quick-action-btn" data-action="add-patient">
+                                <i class="fas fa-plus mr-2"></i> Add New Patient
+                            </button>
+                        </div>
+                        <div class="mb-6 flex justify-between items-center">
+                            <div class="relative w-64">
+                                <input type="text" id="patient-search-input" placeholder="Search patients..."
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-blue-600 text-white">All</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm">Active</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm">Inactive</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Visit</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for patient in all_patients %}
+                                    <tr class="hover:bg-gray-50" data-patient-id="{{ patient.id }}">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/{{ 'women' if patient.id % 2 == 0 else 'men' }}/{{ patient.id % 100 }}.jpg" alt="Patient">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900 patient-name">{{ patient.first_name }} {{ patient.last_name }}</div>
+                                                    <div class="text-sm text-gray-500">ID: #PAT-{{ "%04d"|format(patient.id) }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 patient-email">{{ patient.user.email }}</div>
+                                            <div class="text-sm text-gray-500 patient-phone">{{ patient.phone }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">
+                                                {% set last_appointment = patient.last_appointment_date if patient.last_appointment_date else 'Never' %}
+                                                {{ last_appointment }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium patient-actions">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3 view-patient" data-patient-id="{{ patient.id }}">View</button>
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3 edit-patient" data-patient-id="{{ patient.id }}">Edit</button>
+                                            <button class="text-green-600 hover:text-green-900 mr-3 add-prescription-btn" data-patient-id="{{ patient.id }}">Add Prescription</button>
+                                            <button class="text-purple-600 hover:text-purple-900 mr-3 add-record-btn" data-patient-id="{{ patient.id }}">Add Record</button>
+                                            <button class="text-yellow-600 hover:text-yellow-900 mr-3 send-notification-btn" data-patient-id="{{ patient.id }}">Send Notification</button>
+                                            <button class="text-red-600 hover:text-red-900 delete-patient" data-patient-id="{{ patient.id }}">Delete</button>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No patients found</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="text-sm text-gray-500">
+                                Showing <span class="font-medium">1</span> to <span class="font-medium">{{ all_patients|length }}</span> of <span class="font-medium">{{ all_patients|length }}</span> patients
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50" disabled>Previous</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-blue-600 text-white">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="medical-records" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">Medical Records</h2>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                <i class="fas fa-plus mr-2"></i> Add New Record
+                            </button>
+                        </div>
+                        <div class="mb-6 flex justify-between items-center">
+                            <div class="relative w-64">
+                                <input type="text" placeholder="Search records..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <div class="mb-2 flex justify-between items-center">
+                                <label class="block text-sm font-medium text-gray-700">Patient</label>
+                                <button type="button" onclick="loadAllPatientDropdowns()" class="text-xs text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-sync-alt mr-1"></i> Refresh List
+                                </button>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            {% for record in medical_records %}
+                            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition duration-200">
+                                <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                                    <div>
+                                        <h3 class="font-medium text-gray-900">{{ record.patient.first_name }} {{ record.patient.last_name }} - {{ record.diagnosis or 'Consultation' }}</h3>
+                                        <p class="text-sm text-gray-500">Record ID: #REC-{{ "%04d"|format(record.id) }} | Created: {{ record.record_date.strftime('%Y-%m-%d') }}</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">View</button>
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+                                        <button class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-500 mb-1">Diagnosis</h4>
+                                            <p class="text-sm">{{ record.diagnosis or 'N/A' }}</p>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-500 mb-1">Treatment</h4>
+                                            <p class="text-sm">{{ record.treatment or 'N/A' }}</p>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-medium text-gray-500 mb-1">Notes</h4>
+                                            <p class="text-sm">{{ record.notes or 'No notes' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="p-4 text-gray-500">No medical records found</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="text-sm text-gray-500">
+                                Showing <span class="font-medium">1</span> to <span class="font-medium">{{ medical_records|length }}</span> of <span class="font-medium">{{ medical_records_count }}</span> records
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50" disabled>Previous</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-blue-600 text-white">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">3</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="prescriptions" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">Prescriptions Management</h2>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200" onclick="openPrescriptionModal()">
+                                <i class="fas fa-plus mr-2"></i> Create New Prescription
+                            </button>
+                        </div>
+                        <div class="mb-6 flex justify-between items-center">
+                            <div class="relative w-64">
+                                <input type="text" placeholder="Search prescriptions..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm">All</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm">Active</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm">Expired</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm">Pending</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medication</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for record in medical_records if record.prescriptions %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/{{ 'women' if record.patient.gender == 'female' else 'men' }}/{{ record.patient.id }}.jpg" alt="Patient">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">{{ record.patient.first_name }} {{ record.patient.last_name }}</div>
+                                                    <div class="text-sm text-gray-500">ID: #PAT-{{ "%04d"|format(record.patient.id) }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ record.prescriptions.split(',')[0] if record.prescriptions else 'N/A' }}</div>
+                                            <div class="text-sm text-gray-500">Medication</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ record.prescriptions.split(',')[1] if record.prescriptions and ',' in record.prescriptions else 'N/A' }}</div>
+                                            <div class="text-sm text-gray-500">Dosage</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ record.record_date.strftime('%Y-%m-%d') }}</div>
+                                            <div class="text-sm text-gray-500">Expires: {{ (record.record_date + timedelta(days=30)).strftime('%Y-%m-%d') }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                            <button class="text-red-600 hover:text-red-900">Cancel</button>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No prescriptions found</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="text-sm text-gray-500">
+                                Showing <span class="font-medium">1</span> to <span class="font-medium">{{ medical_records|length }}</span> of <span class="font-medium">{{ pending_prescriptions_count }}</span> prescriptions
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50" disabled>Previous</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-blue-600 text-white">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">3</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="notifications" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">Notifications</h2>
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                <i class="fas fa-check mr-2"></i> Mark All as Read
+                            </button>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            {% for notification in recent_notifications %}
+                            <div class="p-4 hover:bg-gray-50 transition duration-200">
+                                <div class="flex items-start space-x-3">
+                                    <div class="bg-blue-100 p-2 rounded-full">
+                                        <i class="fas fa-{{ notification.icon }} text-blue-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm">{{ notification.message }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ notification.time_ago }}</p>
+                                    </div>
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm mark-read" data-notification-id="{{ notification.id }}">Mark as Read</button>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="p-4 text-gray-500">No notifications</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div id="settings" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-2xl font-bold mb-6">Settings</h2>
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Profile Settings</h3>
+                                <form id="profile-form">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                            <input type="text" name="first_name" value="{{ doctor.first_name }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                            <input type="text" name="last_name" value="{{ doctor.last_name }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        </div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input type="email" name="email" value="{{ doctor.user.email }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                                        <input type="text" name="specialization" value="{{ doctor.specialization }}" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                        Save Changes
+                                    </button>
+                                </form>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">Change Password</h3>
+                                <form id="password-form">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                                        <input type="password" name="current_password" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                                        <input type="password" name="new_password" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                                        <input type="password" name="confirm_password" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                                        Update Password
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="add-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Associate Existing Patient</h3>
+                    <button onclick="closeModal('add-patient-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Search Patients</label>
+                    <input type="text" id="patient-search" placeholder="Search by name or email..."
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="mb-4 max-h-60 overflow-y-auto">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Patient</label>
+                    <div id="patient-list"></div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeModal('add-patient-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        Cancel
+                    </button>
+                    <button id="associate-patient-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Associate Patient
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="prescription-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Create New Prescription</h3>
+                    <button onclick="closeModal('prescription-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="prescription-form-main">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient *</label>
+                        <select id="prescription-patient" name="patient_id" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 select-loading" required>
+                            <option value="">Loading patients...</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Medication *</label>
+                        <input type="text" name="medication" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosage *</label>
+                        <input type="text" name="dosage" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10mg once daily">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Duration *</label>
+                        <input type="text" name="duration" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 7 days">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                        <textarea name="instructions" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeModal('prescription-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Create Prescription
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="view-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Patient Details</h3>
+                    <button onclick="closeModal('view-patient-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div id="patient-details"></div>
+
+                <div class="mt-6">
+                    <h4 class="text-md font-medium text-gray-800 mb-3">Medical Records</h4>
+                    <div id="patient-records" class="space-y-3 max-h-60 overflow-y-auto"></div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeModal('view-patient-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="add-prescription-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Add Prescription</h3>
+                    <button onclick="closeModal('add-prescription-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="prescription-form-quick">
+                    <input type="hidden" id="prescription-patient-id" name="patient_id">
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Medication *</label>
+                        <input type="text" name="medication" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosage *</label>
+                        <input type="text" name="dosage" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10mg once daily">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Duration *</label>
+                        <input type="text" name="duration" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 7 days">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                        <textarea name="instructions" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeModal('add-prescription-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Add Prescription
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="add-record-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Add Medical Record</h3>
+                    <button onclick="closeModal('add-record-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="record-form">
+                    <input type="hidden" id="record-patient-id" name="patient_id">
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis *</label>
+                        <input type="text" name="diagnosis" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Treatment</label>
+                        <textarea name="treatment" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeModal('add-record-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Add Record
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="send-notification-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Send Notification</h3>
+                    <button onclick="closeModal('send-notification-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form id="notification-form">
+                    <input type="hidden" id="notification-patient-id" name="patient_id">
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                        <input type="text" name="title" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message *</label>
+                        <textarea name="message" rows="4" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeModal('send-notification-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Send Notification
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+
+    </div>
+</div>
+<div id="view-appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+
+    </div>
+</div>
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const mobileMenuButton = document.querySelector('.mobile-menu-button');
+            const mainContent = document.querySelector('.main-content');
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+            function toggleDesktopSidebar() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.toggle('collapsed');
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '250px';
+                        mainContent.style.width = 'calc(100% - 250px)';
+                    }
+                }
+            }
+            function toggleMobileSidebar() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                }
+            }
+            overlay.addEventListener('click', function() {
+                if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                }
+            });
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', toggleDesktopSidebar);
+            }
+
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', toggleMobileSidebar);
+            }
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('open');
+                        overlay.classList.remove('active');
+                    }
+                });
+            });
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '70px';
+                        mainContent.style.width = 'calc(100% - 70px)';
+                    } else {
+                        mainContent.style.marginLeft = '250px';
+                        mainContent.style.width = 'calc(100% - 250px)';
+                    }
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.style.marginLeft = '0';
+                    mainContent.style.width = '100%';
+                }
+            });
+
+        const tabContents = document.querySelectorAll('.tab-content');
+        const pageTitle = document.getElementById('page-title');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                navItems.forEach(i => i.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+
+                this.classList.add('active');
+                const targetId = this.getAttribute('href').substring(1);
+                const targetTab = document.getElementById(targetId);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+                const sidebarText = this.querySelector('.sidebar-text');
+                if (sidebarText && pageTitle) {
+                    pageTitle.textContent = sidebarText.textContent;
+                }
+            });
+        });
+
+        const quickActionButtons = document.querySelectorAll('.quick-action-btn');
+        quickActionButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                if (action === 'add-patient') {
+                    document.getElementById('add-patient-modal').classList.remove('hidden');
+                } else if (action === 'add-prescription') {
+                    document.getElementById('prescription-modal').classList.remove('hidden');
+                }
+            });
+        });
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        };
+
+    });
+
+    function loadDoctorPatients() {
+        fetch('/api/doctor/my-patients')
+            .then(response => response.json())
+            .then(patients => {
+                const appointmentPatientSelect = document.getElementById('patient-select');
+                if (appointmentPatientSelect) {
+                    appointmentPatientSelect.innerHTML = '<option value="">Select Patient</option>';
+                    patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.id;
+                        option.textContent = `${patient.first_name} ${patient.last_name}`;
+                        appointmentPatientSelect.appendChild(option);
+                    });
+                }
+            const prescriptionPatientSelect = document.getElementById('prescription-patient');
+            if (prescriptionPatientSelect) {
+                prescriptionPatientSelect.innerHTML = '<option value="">Select Patient</option>';
+                patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = `${patient.first_name} ${patient.last_name}`;
+                    prescriptionPatientSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading patients:', error);
+        });
+}
+
+document.getElementById('appointment-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const patientId = document.getElementById('patient-select').value;
+    const appointmentDate = document.getElementById('appointment-date').value;
+    const appointmentTime = document.getElementById('appointment-time').value;
+    const reason = document.getElementById('appointment-reason').value;
+
+    fetch('/api/doctor/appointments', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            patient_id: patientId,
+            appointment_date: appointmentDate,
+            appointment_time: appointmentTime,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Appointment scheduled successfully!');
+            loadAppointments();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while scheduling the appointment');
+    });
+});
+document.getElementById('prescription-form-main')?.addEventListener('submit', handlePrescriptionSubmit);
+document.getElementById('prescription-form-quick')?.addEventListener('submit', handlePrescriptionSubmit);
+
+function handlePrescriptionSubmit(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+        patient_id: formData.get('patient_id'),
+        medication: formData.get('medication'),
+        dosage: formData.get('dosage'),
+        duration: formData.get('duration'),
+        instructions: formData.get('instructions')
+    };
+    fetch('/api/doctor/add-prescription', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Prescription added successfully!');
+            if (e.target.id === 'prescription-form-main') {
+                closeModal('prescription-modal');
+            } else {
+                closeModal('add-prescription-modal');
+            }
+            e.target.reset();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the prescription');
+    });
+}
+function openPrescriptionModal(patientId = null) {
+    if (patientId) {
+        document.getElementById('prescription-patient-id').value = patientId;
+        const select = document.getElementById('prescription-patient');
+        if (select) {
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value == patientId) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+    document.getElementById('prescription-modal').classList.remove('hidden');
+}
+function openMedicalRecordModal(patientId) {
+    document.getElementById('record-patient-id').value = patientId;
+    document.getElementById('add-record-modal').classList.remove('hidden');
+}
+function openNotificationModal(patientId) {
+    document.getElementById('notification-patient-id').value = patientId;
+    document.getElementById('send-notification-modal').classList.remove('hidden');
+}
+document.getElementById('prescription-form-main').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+        patient_id: formData.get('patient_id'),
+        medication: formData.get('medication'),
+        dosage: formData.get('dosage'),
+        duration: formData.get('duration'),
+        instructions: formData.get('instructions')
+    };
+
+    fetch('/api/doctor/add-prescription', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Prescription added successfully!');
+            closeModal('prescription-modal');
+            this.reset();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the prescription');
+    });
+});
+document.getElementById('record-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+        patient_id: formData.get('patient_id'),
+        diagnosis: formData.get('diagnosis'),
+        treatment: formData.get('treatment'),
+        notes: formData.get('notes')
+    };
+
+    fetch('/api/doctor/patient/' + data.patient_id + '/medical-records', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Medical record added successfully!');
+            closeModal('add-record-modal');
+            this.reset();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the medical record');
+    });
+});
+document.getElementById('notification-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = {
+        patient_id: formData.get('patient_id'),
+        title: formData.get('title'),
+        message: formData.get('message')
+    };
+
+    fetch('/api/doctor/patient/' + data.patient_id + '/send-notification', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Notification sent successfully!');
+            closeModal('send-notification-modal');
+            this.reset();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while sending the notification');
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.add-prescription-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const patientId = this.getAttribute('data-patient-id');
+            openPrescriptionModal(patientId);
+        });
+    });
+    document.querySelectorAll('.add-record-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const patientId = this.getAttribute('data-patient-id');
+            openMedicalRecordModal(patientId);
+        });
+    });
+    document.querySelectorAll('.send-notification-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const patientId = this.getAttribute('data-patient-id');
+            openNotificationModal(patientId);
+        });
+    });
+});
+function setupPatientSearch() {
+    const searchInput = document.getElementById('patient-search-input');
+    if (!searchInput) return;
+
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = this.value.trim();
+
+            fetch(`/api/doctor/patients-search?search=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(patients => {
+                    updatePatientsTable(patients);
+                })
+                .catch(error => {
+                    console.error('Error searching patients:', error);
+                });
+        }, 300);
+    });
+}
+function updatePatientsTable(patients) {
+    const tbody = document.querySelector('tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (patients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No patients found</td></tr>';
+        return;
+    }
+
+    patients.forEach(patient => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        row.setAttribute('data-patient-id', patient.id);
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                        <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/${patient.id % 2 === 0 ? 'women' : 'men'}/${patient.id % 100}.jpg" alt="Patient">
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900 patient-name">${patient.first_name} ${patient.last_name}</div>
+                        <div class="text-sm text-gray-500">ID: #PAT-${patient.id.toString().padStart(4, '0')}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 patient-email">${patient.email}</div>
+                <div class="text-sm text-gray-500 patient-phone">${patient.phone}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${patient.last_visit}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium patient-actions">
+                <button class="text-blue-600 hover:text-blue-900 mr-3 view-patient" data-patient-id="${patient.id}">View</button>
+                <button class="text-blue-600 hover:text-blue-900 mr-3 edit-patient" data-patient-id="${patient.id}">Edit</button>
+                <button class="text-green-600 hover:text-green-900 mr-3 add-prescription-btn" data-patient-id="${patient.id}">Add Prescription</button>
+                <button class="text-purple-600 hover:text-purple-900 mr-3 add-record-btn" data-patient-id="${patient.id}">Add Record</button>
+                <button class="text-yellow-600 hover:text-yellow-900 mr-3 send-notification-btn" data-patient-id="${patient.id}">Send Notification</button>
+                <button class="text-red-600 hover:text-red-900 delete-patient" data-patient-id="${patient.id}">Delete</button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+    addPatientActionListeners();
+}
+    function initDoctorDashboard() {
+    loadDoctorPatients();
+    setupPatientSearch();
+    loadAppointments();
+}
+function loadAppointments() {
+    fetch('/api/doctor/appointments')
+        .then(response => response.json())
+        .then(appointments => {
+            const container = document.getElementById('appointments-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (appointments.length === 0) {
+                container.innerHTML = '<div class="p-4 text-gray-500">No appointments found</div>';
+                return;
+            }
+
+            appointments.forEach(appointment => {
+                const appointmentElement = document.createElement('div');
+                appointmentElement.className = 'p-4 hover:bg-gray-50 transition duration-200';
+
+                appointmentElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" class="w-10 h-10 rounded-full">
+                            <div>
+                                <h4 class="font-medium text-gray-900">${appointment.patient_name}</h4>
+                                <p class="text-sm text-gray-500">${appointment.reason || 'Consultation'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium">${appointment.date}, ${appointment.time}</p>
+                            <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">${appointment.status}</span>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(appointmentElement);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading appointments:', error);
+        });
+}
+    function setupPatientSearch() {
+    const searchInput = document.getElementById('patient-search-input');
+    if (!searchInput) return;
+
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchTerm = this.value.trim();
+
+            fetch(`/api/doctor/patients-search?search=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(patients => {
+                    updatePatientsTable(patients);
+                })
+                .catch(error => {
+                    console.error('Error searching patients:', error);
+                });
+        }, 300);
+    });
+}
+
+function updatePatientsTable(patients) {
+    const tbody = document.querySelector('tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (patients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No patients found</td></tr>';
+        return;
+    }
+
+    patients.forEach(patient => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+        row.setAttribute('data-patient-id', patient.id);
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                        <img class="h-10 w-10 rounded-full" src="https://randomuser.me/api/portraits/${patient.id % 2 === 0 ? 'women' : 'men'}/${patient.id % 100}.jpg" alt="Patient">
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900 patient-name">${patient.first_name} ${patient.last_name}</div>
+                        <div class="text-sm text-gray-500">ID: #PAT-${patient.id.toString().padStart(4, '0')}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 patient-email">${patient.email}</div>
+                <div class="text-sm text-gray-500 patient-phone">${patient.phone}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${patient.last_visit}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium patient-actions">
+                <button class="text-blue-600 hover:text-blue-900 mr-3 view-patient" data-patient-id="${patient.id}">View</button>
+                <button class="text-blue-600 hover:text-blue-900 mr-3 edit-patient" data-patient-id="${patient.id}">Edit</button>
+                <button class="text-green-600 hover:text-green-900 mr-3 add-prescription-btn" data-patient-id="${patient.id}">Add Prescription</button>
+                <button class="text-purple-600 hover:text-purple-900 mr-3 add-record-btn" data-patient-id="${patient.id}">Add Record</button>
+                <button class="text-yellow-600 hover:text-yellow-900 mr-3 send-notification-btn" data-patient-id="${patient.id}">Send Notification</button>
+                <button class="text-red-600 hover:text-red-900 delete-patient" data-patient-id="${patient.id}">Delete</button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+    addPatientActionListeners();
+}
+    function initDoctorDashboard() {
+    loadDoctorPatients();
+    setupPatientSearch();
+    loadAppointments();
+}
+document.addEventListener('DOMContentLoaded', function() {
+    initDoctorDashboard();
+});
+document.getElementById('avatar-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        fetch('/api/doctor/avatar', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('doctor-avatar').src = data.avatar_url;
+                document.querySelectorAll('.doctor-avatar').forEach(img => {
+                    img.src = data.avatar_url;
+                });
+                alert('Avatar updated successfully!');
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading avatar:', error);
+            alert('Error uploading avatar');
+        });
+    }
+});
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.getElementById(tabName).classList.add('active');
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) {
+        pageTitle.textContent = tabName.charAt(0).toUpperCase() + tabName.slice(1);
+    }
+}
+function openAppointmentModal() {
+    loadDoctorPatients();
+    document.getElementById('appointment-modal').classList.remove('hidden');
+}
+
+function openAddPatientModal() {
+    document.getElementById('add-patient-modal').classList.remove('hidden');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+function viewPatient(patientId) {
+    fetch(`/api/doctor/patient/${patientId}`)
+        .then(response => response.json())
+        .then(patient => {
+            document.getElementById('patient-details').innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="font-medium">Name:</label>
+                        <p>${patient.first_name} ${patient.last_name}</p>
+                    </div>
+                    <div>
+                        <label class="font-medium">Email:</label>
+                        <p>${patient.email}</p>
+                    </div>
+                    <div>
+                        <label class="font-medium">Phone:</label>
+                        <p>${patient.phone}</p>
+                    </div>
+                    <div>
+                        <label class="font-medium">Blood Type:</label>
+                        <p>${patient.blood_type || 'Not specified'}</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('view-patient-modal').classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Error loading patient details:', error);
+        });
+}
+function viewAppointment(appointmentId) {
+    console.log('View appointment:', appointmentId);
+}
+function refreshDashboard() {
+    location.reload();
+}
+setInterval(refreshDashboard, 300000);
+document.addEventListener('DOMContentLoaded', function() {
+    loadDoctorPatients();
+    loadAppointments();
+    document.querySelectorAll('.bg-white.rounded-lg.shadow').forEach(card => {
+        card.style.cursor = 'pointer';
+    });
+});
+
+</script>
+</body>
+</html>

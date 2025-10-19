@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediConnect - Modern Healthcare Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .testimonial-card {
+            transition: all 0.3s ease;
+        }
+        .testimonial-card:hover {
+            transform: scale(1.03);
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        .scroll-down {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .payment-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body class="font-sans text-gray-800">
+    <nav class="bg-white shadow-sm fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-heartbeat text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-blue-600">MediConnect</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="#" class="nav-link px-3 py-2 text-sm font-medium text-gray-900">Home</a>
+                    <a href="#features" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">Features</a>
+                    <a href="#how-it-works" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">How It Works</a>
+                    <a href="#testimonials" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">Testimonials</a>
+                    <a href="#pricing" class="nav-link px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">Pricing</a>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center">
+                    <a href="/login" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50">Log In</a>
+                    <a href="/register/patient" class="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Get Started</a>
+                </div>
+                <div class="-mr-2 flex items-center md:hidden">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none" aria-expanded="false" id="mobile-menu-button">
+                        <span class="sr-only">Open main menu</span>
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="hidden md:hidden" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="#" class="block px-3 py-2 text-base font-medium text-gray-900 bg-blue-50 border-l-4 border-blue-500">Home</a>
+                <a href="#features" class="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Features</a>
+                <a href="#how-it-works" class="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">How It Works</a>
+                <a href="#testimonials" class="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Testimonials</a>
+                <a href="#pricing" class="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Pricing</a>
+            </div>
+            <div class="pt-4 pb-3 border-t border-gray-200">
+                <div class="mt-3 space-y-1">
+                    <a href="/login" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100">Log In</a>
+                    <a href="/register/patient" class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section class="hero-gradient text-white pt-24 pb-20 md:pt-32 md:pb-28">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+                <div class="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
+                    <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+                        <span class="block">Modern Healthcare</span>
+                        <span class="block text-blue-200">Management System</span>
+                    </h1>
+                    <p class="mt-3 text-base text-blue-100 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                        Streamline your medical practice with our all-in-one platform for appointments, patient records, prescriptions, and more.
+                    </p>
+                    <div class="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
+                        <div class="rounded-md shadow">
+                            <a href="p-sign-up.html" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
+                                Get Started
+                            </a>
+                        </div>
+                        <div class="mt-3 rounded-md shadow">
+                            <a href="#" id="live-demo-btn" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 md:py-4 md:text-lg md:px-10">
+                                Live Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
+                    <div class="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
+                        <img class="w-full rounded-lg" src="https://images.unsplash.com/photo-1550831107-1553da8c8464?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Doctor using tablet">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-down absolute bottom-10 left-1/2 transform -translate-x-1/2 text-white text-2xl">
+            <a href="#features"><i class="fas fa-chevron-down"></i></a>
+        </div>
+    </section>
+    <section class="bg-gray-50 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm font-semibold uppercase text-gray-500 tracking-wide">
+                Trusted by healthcare providers worldwide
+            </p>
+            <div class="mt-6 grid grid-cols-2 gap-8 md:grid-cols-6 lg:grid-cols-5">
+                <div class="col-span-1 flex justify-center">
+                    <img class="h-12" src="https://tailwindui.com/img/logos/tuple-logo-gray-400.svg" alt="Tuple">
+                </div>
+                <div class="col-span-1 flex justify-center">
+                    <img class="h-12" src="https://tailwindui.com/img/logos/mirage-logo-gray-400.svg" alt="Mirage">
+                </div>
+                <div class="col-span-1 flex justify-center">
+                    <img class="h-12" src="https://tailwindui.com/img/logos/statickit-logo-gray-400.svg" alt="StaticKit">
+                </div>
+                <div class="col-span-1 flex justify-center">
+                    <img class="h-12" src="https://tailwindui.com/img/logos/transistor-logo-gray-400.svg" alt="Transistor">
+                </div>
+                <div class="col-span-1 flex justify-center">
+                    <img class="h-12" src="https://tailwindui.com/img/logos/workcation-logo-gray-400.svg" alt="Workcation">
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    A better way to manage your practice
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    MediConnect provides all the tools you need to run your healthcare practice efficiently.
+                </p>
+            </div>
+
+            <div class="mt-20">
+                <div class="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="feature-card relative transition duration-300 ease-in-out">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg blur opacity-25"></div>
+                        <div class="relative h-full bg-white p-6 rounded-lg shadow-md">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                                    <i class="fas fa-calendar-check text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900">Appointment Management</h3>
+                                <p class="mt-2 text-base text-gray-500">
+                                    Easily schedule, reschedule, and track patient appointments with our intuitive calendar system.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card relative transition duration-300 ease-in-out">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-green-400 to-green-600 rounded-lg blur opacity-25"></div>
+                        <div class="relative h-full bg-white p-6 rounded-lg shadow-md">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
+                                    <i class="fas fa-file-medical text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900">Electronic Health Records</h3>
+                                <p class="mt-2 text-base text-gray-500">
+                                    Secure, cloud-based patient records accessible from anywhere with full history tracking.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card relative transition duration-300 ease-in-out">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-purple-400 to-purple-600 rounded-lg blur opacity-25"></div>
+                        <div class="relative h-full bg-white p-6 rounded-lg shadow-md">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-purple-500 text-white">
+                                    <i class="fas fa-prescription-bottle-alt text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900">E-Prescriptions</h3>
+                                <p class="mt-2 text-base text-gray-500">
+                                    Generate and send prescriptions electronically to pharmacies with just a few clicks.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card relative transition duration-300 ease-in-out">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-lg blur opacity-25"></div>
+                        <div class="relative h-full bg-white p-6 rounded-lg shadow-md">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white">
+                                    <i class="fas fa-chart-line text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900">Analytics Dashboard</h3>
+                                <p class="mt-2 text-base text-gray-500">
+                                    Track practice performance with real-time analytics and customizable reports.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card relative transition duration-300 ease-in-out">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-red-400 to-red-600 rounded-lg blur opacity-25"></div>
+                        <div class="relative h-full bg-white p-6 rounded-lg shadow-md">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white">
+                                    <i class="fas fa-comments text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900">Patient Portal</h3>
+                                <p class="mt-2 text-base text-gray-500">
+                                    Empower patients with secure access to their health information and appointment scheduling.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card relative transition duration-300 ease-in-out">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-lg blur opacity-25"></div>
+                        <div class="relative h-full bg-white p-6 rounded-lg shadow-md">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                                    <i class="fas fa-mobile-alt text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900">Mobile App</h3>
+                                <p class="mt-2 text-base text-gray-500">
+                                    Manage your practice on the go with our fully-featured iOS and Android applications.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="how-it-works" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">How it works</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Get started in minutes
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    Our platform is designed to be intuitive and easy to use, with no complicated setup required.
+                </p>
+            </div>
+
+            <div class="mt-20">
+                <div class="relative">
+                    <div class="hidden md:block absolute inset-0 left-1/2 border-r-2 border-dashed border-gray-300"></div>
+                    <div class="relative flex flex-col md:flex-row items-center mb-16">
+                        <div class="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-blue-500 text-white text-xl font-semibold shadow-lg">
+                            1
+                        </div>
+                        <div class="mt-4 md:mt-0 md:ml-12 md:w-1/2">
+                            <h3 class="text-lg font-medium text-gray-900">Sign Up</h3>
+                            <p class="mt-2 text-base text-gray-600">
+                                Create your account and set up your practice profile. It takes less than 5 minutes to get started.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="relative flex flex-col md:flex-row items-center mb-16">
+                        <div class="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-blue-500 text-white text-xl font-semibold shadow-lg">
+                            2
+                        </div>
+                        <div class="mt-4 md:mt-0 md:ml-12 md:w-1/2 md:order-first">
+                            <h3 class="text-lg font-medium text-gray-900">Import Your Data</h3>
+                            <p class="mt-2 text-base text-gray-600">
+                                Easily import patient records from your existing system or start fresh with our templates.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="relative flex flex-col md:flex-row items-center mb-16">
+                        <div class="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-blue-500 text-white text-xl font-semibold shadow-lg">
+                            3
+                        </div>
+                        <div class="mt-4 md:mt-0 md:ml-12 md:w-1/2">
+                            <h3 class="text-lg font-medium text-gray-900">Invite Your Team</h3>
+                            <p class="mt-2 text-base text-gray-600">
+                                Add staff members and assign roles with different permission levels for security.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="relative flex flex-col md:flex-row items-center">
+                        <div class="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full bg-blue-500 text-white text-xl font-semibold shadow-lg">
+                            4
+                        </div>
+                        <div class="mt-4 md:mt-0 md:ml-12 md:w-1/2 md:order-first">
+                            <h3 class="text-lg font-medium text-gray-900">Go Live</h3>
+                            <p class="mt-2 text-base text-gray-600">
+                                Start managing appointments, records, and prescriptions from our unified platform.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="testimonials" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Testimonials</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Trusted by healthcare professionals
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    Don't just take our word for it. Here's what our users have to say.
+                </p>
+            </div>
+
+            <div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <div class="testimonial-card bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <img class="w-12 h-12 rounded-full" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Dr. Sarah Johnson">
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium text-gray-900">Dr. Sarah Johnson</h4>
+                            <p class="text-blue-600">Cardiologist</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-gray-600 italic">
+                            "MediConnect has transformed how I manage my practice. The appointment scheduling alone has saved me hours each week, and my patients love the portal."
+                        </p>
+                        <div class="mt-4 flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <img class="w-12 h-12 rounded-full" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Dr. Michael Chen">
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium text-gray-900">Dr. Michael Chen</h4>
+                            <p class="text-blue-600">Pediatrician</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-gray-600 italic">
+                            "As a small practice, we needed an affordable solution that didn't compromise on features. MediConnect delivered everything we needed and more."
+                        </p>
+                        <div class="mt-4 flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <div class="flex items-center">
+                        <img class="w-12 h-12 rounded-full" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Nurse Emily Rodriguez">
+                        <div class="ml-4">
+                            <h4 class="text-lg font-medium text-gray-900">Nurse Emily Rodriguez</h4>
+                            <p class="text-blue-600">Practice Manager</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-gray-600 italic">
+                            "The transition was seamless, and the support team was incredibly helpful. We were up and running in less than a day with all our patient data imported."
+                        </p>
+                        <div class="mt-4 flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="pricing" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-blue-600 font-semibold tracking-wide uppercase">Pricing</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Simple, transparent pricing
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+                    Choose the plan that fits your practice's needs. No hidden fees, cancel anytime.
+                </p>
+            </div>
+
+            <div class="mt-16 space-y-8 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-x-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Basic</h3>
+                    <p class="mt-4 text-sm text-gray-500">
+                        Perfect for solo practitioners just getting started
+                    </p>
+                    <div class="mt-6">
+                        <p class="text-4xl font-extrabold text-gray-900">$29</p>
+                        <p class="mt-2 text-sm text-gray-500">per provider/month</p>
+                    </div>
+                    <div class="mt-8">
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Up to 100 patients</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Appointment scheduling</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Basic EHR</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Email support</span>
+                            </li>
+                        </ul>
+                        <div class="mt-8">
+                            <button class="w-full px-4 py-3 border border-gray-300 text-base font-medium rounded-md text-blue-700 bg-white hover:bg-gray-50 subscribe-btn" data-plan="basic">
+                                Subscribe Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg border-2 border-blue-500 transform scale-105">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full">
+                        Most Popular
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900">Professional</h3>
+                    <p class="mt-4 text-sm text-gray-500">
+                        Ideal for growing practices with multiple providers
+                    </p>
+                    <div class="mt-6">
+                        <p class="text-4xl font-extrabold text-gray-900">$59</p>
+                        <p class="mt-2 text-sm text-gray-500">per provider/month</p>
+                    </div>
+                    <div class="mt-8">
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Unlimited patients</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Advanced EHR</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">E-prescriptions</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Patient portal</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Analytics dashboard</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Priority support</span>
+                            </li>
+                        </ul>
+                        <div class="mt-8">
+                            <button class="w-full px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 subscribe-btn" data-plan="professional">
+                                Subscribe Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Enterprise</h3>
+                    <p class="mt-4 text-sm text-gray-500">
+                        For large practices and healthcare organizations
+                    </p>
+                    <div class="mt-6">
+                        <p class="text-4xl font-extrabold text-gray-900">$99</p>
+                        <p class="mt-2 text-sm text-gray-500">per provider/month</p>
+                    </div>
+                    <div class="mt-8">
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">All Professional features</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Custom integrations</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">Dedicated account manager</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">On-site training</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span class="text-gray-700">24/7 support</span>
+                            </li>
+                        </ul>
+                        <div class="mt-8">
+                            <button class="w-full px-4 py-3 border border-gray-300 text-base font-medium rounded-md text-blue-700 bg-white hover:bg-gray-50 subscribe-btn" data-plan="enterprise">
+                                Contact Sales
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="bg-blue-700 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:flex lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                        Ready to transform your practice?
+                    </h2>
+                    <p class="mt-4 text-lg text-blue-100">
+                        Join thousands of healthcare professionals using MediConnect to streamline their operations.
+                    </p>
+                </div>
+                <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                    <div class="inline-flex rounded-md shadow">
+                        <a href="p-sign-up.html" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50">
+                            Get Started
+                        </a>
+                    </div>
+                    <div class="ml-3 inline-flex rounded-md shadow">
+                        <a href="#" id="footer-live-demo-btn" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            Live Demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-gray-800 text-gray-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="col-span-2">
+                    <div class="flex items-center">
+                        <i class="fas fa-heartbeat text-blue-400 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-white">MediConnect</span>
+                    </div>
+                    <p class="mt-4 text-sm">
+                        Modern healthcare management solutions designed to help medical professionals focus on what matters most - patient care.
+                    </p>
+                    <div class="mt-6 flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Solutions</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white">For Clinics</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">For Hospitals</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">For Specialists</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">For Dentists</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">For Therapists</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Support</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Documentation</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Guides</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">API Status</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Contact Us</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Company</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><a href="#" class="text-sm hover:text-white">About</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Blog</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Press</a></li>
+                        <li><a href="#" class="text-sm hover:text-white">Partners</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-12 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between">
+                <p class="text-sm text-gray-400">
+                    &copy; 2023 MediConnect. All rights reserved.
+                </p>
+                <div class="mt-4 md:mt-0 flex space-x-6">
+                    <a href="#" class="text-sm text-gray-400 hover:text-white">Privacy Policy</a>
+                    <a href="#" class="text-sm text-gray-400 hover:text-white">Terms of Service</a>
+                    <a href="#" class="text-sm text-gray-400 hover:text-white">HIPAA Compliance</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div class="payment-modal" id="payment-modal">
+        <div class="payment-content">
+            <h2 class="text-xl font-bold mb-4">Subscribe to <span id="plan-name">Professional</span> Plan</h2>
+            <form id="payment-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="card-number">
+                        Card Number
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="card-number" type="text" placeholder="**** **** **** ****">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="expiry">
+                            Expiry Date
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="expiry" type="text" placeholder="MM/YY">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="cvc">
+                            CVC
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="cvc" type="text" placeholder="123">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
+                        Name on Card
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" type="text" placeholder="John Doe">
+                </div>
+                <div class="flex items-center justify-between">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                        Pay $<span id="plan-price">59</span>/month
+                    </button>
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" id="close-payment-modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="payment-modal" id="demo-modal">
+        <div class="payment-content">
+            <h2 class="text-xl font-bold mb-4">Request a Live Demo</h2>
+            <p class="mb-4">Fill out the form below and our team will contact you to schedule a personalized demo of MediConnect.</p>
+            <form id="demo-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="demo-name">
+                        Full Name
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="demo-name" type="text" placeholder="John Doe" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="demo-email">
+                        Email Address
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="demo-email" type="email" placeholder="john@example.com" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="demo-company">
+                        Practice/Organization
+                    </label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="demo-company" type="text" placeholder="MediCare Clinic">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="demo-message">
+                        Message (Optional)
+                    </label>
+                    <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="demo-message" rows="3" placeholder="Tell us about your specific needs"></textarea>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                        Request Demo
+                    </button>
+                    <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" id="close-demo-modal">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+
+                    const mobileMenu = document.getElementById('mobile-menu');
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fadeIn');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .testimonial-card').forEach(card => {
+            observer.observe(card);
+        });
+        const paymentModal = document.getElementById('payment-modal');
+        const demoModal = document.getElementById('demo-modal');
+        const planName = document.getElementById('plan-name');
+        const planPrice = document.getElementById('plan-price');
+        let currentPlan = '';
+
+        document.querySelectorAll('.subscribe-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentPlan = this.getAttribute('data-plan');
+
+                if (currentPlan === 'enterprise') {
+                    window.location.href = 'mailto:sales@mediconnect.com?subject=Enterprise Plan Inquiry';
+                    return;
+                }
+                if (currentPlan === 'basic') {
+                    planName.textContent = 'Basic';
+                    planPrice.textContent = '29';
+                } else if (currentPlan === 'professional') {
+                    planName.textContent = 'Professional';
+                    planPrice.textContent = '59';
+                }
+
+                paymentModal.style.display = 'flex';
+            });
+        });
+
+        document.getElementById('close-payment-modal').addEventListener('click', function() {
+            paymentModal.style.display = 'none';
+        });
+
+        document.getElementById('payment-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your subscription! You will receive a confirmation email shortly.');
+            paymentModal.style.display = 'none';
+        });
+        document.getElementById('live-demo-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            demoModal.style.display = 'flex';
+        });
+
+        document.getElementById('footer-live-demo-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            demoModal.style.display = 'flex';
+        });
+
+        document.getElementById('close-demo-modal').addEventListener('click', function() {
+            demoModal.style.display = 'none';
+        });
+
+        document.getElementById('demo-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your interest! Our team will contact you within 24 hours to schedule your demo.');
+            demoModal.style.display = 'none';
+        });
+        window.addEventListener('click', function(e) {
+            if (e.target === paymentModal) {
+                paymentModal.style.display = 'none';
+            }
+            if (e.target === demoModal) {
+                demoModal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
